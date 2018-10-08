@@ -25,11 +25,11 @@ CUR = CONN.cursor()
 # region GLOBALS
 FEED_URL_START = 'https://feedly.com/i/subscription/feed/'
 CNN_RSS_URL = 'http://rss.cnn.com/rss/edition_technology'
-CNN_PAGEDOWN_NUMBER = 3
+CNN_PAGEDOWN_NUMBER = 100
 CHROME_DRIVER_PATH = 'chromedriver.exe'
 RESET_NEWS_LINKS = 0
 RESET_ARTICLES = 0
-RESET_CORPUS = 1
+RESET_CORPUS =  1
 STOP_WORDS = []
 NEWS_LINKS_TABLE_NAME = 'news_links'
 ARTICLES_TABLE_NAME = 'articles'
@@ -84,10 +84,20 @@ def rss_feed_iteration(site_rss_url,browser):
     # endregion
 
     # region ITERATION_ONLY
+    page_height = browser.execute_script("return window.pageYOffset;")
+    grace_period_limit = number_of_pagedowns
     while number_of_pagedowns:
+        grace_period_counter = 0
         body.send_keys(Keys.PAGE_DOWN)
         time.sleep(0.2)
+        while((page_height == browser.execute_script("return window.pageYOffset;")) & (grace_period_counter != grace_period_limit)):
+            grace_period_counter += 1
+            body.send_keys(Keys.PAGE_DOWN)
+            time.sleep(0.2)
+        if grace_period_counter == grace_period_limit:
+            break
         number_of_pagedowns-=1
+        page_height = browser.execute_script("return window.pageYOffset;")
     # endregion
 
     # region SCRAPE
@@ -100,6 +110,7 @@ def rss_feed_iteration(site_rss_url,browser):
     return list_of_urls
 
 def get_article_from_page(url):
+
     article = Article(url)
     article.download()
     article.parse()
@@ -109,7 +120,7 @@ def get_article_from_page(url):
 # region DATABASE_HANDLERS
 def upload_news_link(url):
     try:
-        CUR.execute('INSERT INTO '+NEWS_LINKS_TABLE_NAME+' VALUES ( %(url)s  )', {"url": url})
+        CUR.execute('INSERT INTO '+NEWS_LINKS_TABLE_NAME+' VALUES ( %(url)s , false  )', {"url": url})
     except:
         CONN.rollback()
     else:
@@ -117,8 +128,10 @@ def upload_news_link(url):
 
 def upload_article(article):
     article = article.replace('\n','')
+    article = article.replace('\"',' ')
+    article = article.replace('\'','\'\'')
     try:
-        CUR.execute('INSERT INTO '+ARTICLES_TABLE_NAME+' (article) VALUES ( %(article)s  )', {"article": article})
+        CUR.execute("""INSERT INTO """+ARTICLES_TABLE_NAME+""" (article,used) VALUES ( '"""+article+"""',false )""")
     except:
         CONN.rollback()
     else:
@@ -126,11 +139,29 @@ def upload_article(article):
 
 def upload_corpus(cleaned_text):
     try:
-        CUR.execute('INSERT INTO '+CORPUS_TABLE_NAME+' (data) VALUES ( %(text)s  )', {"text": cleaned_text})
+        CUR.execute('INSERT INTO '+CORPUS_TABLE_NAME+' (data, used) VALUES (  \''+cleaned_text+'\' , false  )')
     except:
         CONN.rollback()
     else:
         CONN.commit()
+
+def set_used(table_name, id, value):
+    try:
+        CUR.execute('UPDATE '+table_name+' SET used = %(value)s WHERE id = %(id)s', {"value": value,"id": id})
+    except:
+        CONN.rollback()
+    else:
+        CONN.commit()
+
+
+def reset_used(table_name,value):
+    try:
+        CUR.execute('UPDATE '+table_name+' SET used = %(value)s', {"value": value})
+    except:
+        CONN.rollback()
+    else:
+        CONN.commit()
+
 
 def remove_table_rows(table_name):
     try:
@@ -169,45 +200,63 @@ def clean_text(text):
 # endregion
 
 # region ACTIONS
+
 def load_news_urls():
     browser = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH)
 
-    if RESET_NEWS_LINKS == 1:
+    if RESET_NEWS_LINKS:
         remove_table_rows(NEWS_LINKS_TABLE_NAME)
 
     for feed_url in load_rss_links():
         for link in rss_feed_iteration(feed_url,browser):
             upload_news_link(link)
         time.sleep(3)
+        try:
+            CUR.execute('INSERT INTO loaded_sites VALUES ( %(site)s  )', {"site": feed_url})
+        except:
+            CONN.rollback()
+        else:
+            CONN.commit()
+
 
 def load_articles():
     if RESET_ARTICLES == 1:
         remove_table_rows(ARTICLES_TABLE_NAME)
+        reset_used(NEWS_LINKS_TABLE_NAME, 'false')
 
-    CUR.execute("""SELECT url from """+NEWS_LINKS_TABLE_NAME)
+    CUR.execute("""SELECT * FROM """+NEWS_LINKS_TABLE_NAME+ """ WHERE used = false""")
     rows = CUR.fetchall()
 
     for link in rows:
         time.sleep(2)
-        article = get_article_from_page(link[0])
-        upload_article(article)
+        try:
+            article = get_article_from_page(link[0])
+        except:
+            print(link[2])
+        else:
+            upload_article(article)
+            set_used(NEWS_LINKS_TABLE_NAME,link[2],'true')
 
 def clean_articles():
     if RESET_CORPUS == 1:
         remove_table_rows(CORPUS_TABLE_NAME)
+        reset_used(ARTICLES_TABLE_NAME, 'false')
 
-    CUR.execute("""SELECT article from """ + ARTICLES_TABLE_NAME)
+    CUR.execute("""SELECT * from """ + ARTICLES_TABLE_NAME+ """ WHERE used = false""")
     rows = CUR.fetchall()
 
     for text in rows:
-        upload_corpus(clean_text(text[0]))
+        try:
+            upload_corpus(clean_text(text[1]))
+        except:
+            print(text[0])
+        else:
+            set_used(ARTICLES_TABLE_NAME,text[0],'true')
 # endregion
 
 def main():
     #load_news_urls()
     #load_articles()
     #clean_articles()
-
-
 
 main()
