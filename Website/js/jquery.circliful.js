@@ -34,7 +34,7 @@
             targetColor: '#2980B9',
             text: null,
             textStyle: null,
-            textColor: '#666',
+            textColor: '#2980B9',
             textY: null,
             textX: null,
             multiPercentage: 0, //Todo: Deprecate setting. This should be detected when perctentages-length is >1 All initialized objects must subsequently use the percentages-array(!)

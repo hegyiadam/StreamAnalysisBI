@@ -3,39 +3,34 @@ include 'database_connection.php';
 
 
 function selectArticles($exp) {
-
-    $exp = "%" . $exp ."%";
-
     $db = connectToDb();
+    
+    //Delete all the previous corpus
+    $general_cursor = pg_query($db, "DELETE FROM selected_articles");
 
-    $sql ="SELECT data FROM corpus WHERE data LIKE '{$exp}';";
-    $errs = array();
-    array_push($errs,$exp);
-    $result = array();
-    $ret = pg_query($db, $sql);
+    //Select every corpus that includes the expression
+    $exp = "%" . $exp ."%";
+    $sql ='SELECT data FROM corpus WHERE data ILIKE $1;';
+    $select_corpus_cursor = pg_query_params($db, $sql,array($exp));
 
-    if(!$ret) {
-        array_push($errs,pg_last_error($db));
+    if(!$select_corpus_cursor) {
+        dbErrorHandler($db);
         exit;
     } 
-
     
-    array_push($result,$sql);
-    $ret2=pg_query($db, "DELETE FROM selected_articles");
-    while($row = pg_fetch_row($ret)) {
-        array_push($result,$row[0]);
-        $ret2=pg_query($db, "INSERT INTO selected_articles (article) VALUES ('{$row[0]}')");
+    //Upload the found corpuses    
+    while($row = pg_fetch_row($select_corpus_cursor)) {
+        $sql = 'INSERT INTO selected_articles (article) VALUES ($1)';
+        $general_cursor=pg_query_params($db, $sql , array($row[0]));
         
-        if(!$ret2) {
-            array_push($errs,pg_last_error($db));
+        if(!$general_cursor) {
+            dbErrorHandler($db);
             exit;
         } 
     }
 
     pg_close($db);
-    //echo json_encode($result);
 }
-
 
 ?>
 
