@@ -28,15 +28,32 @@ body, html {
     background-size: cover;
     background-image: url("../img/newspaper_edited01.png");
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    
 }
+
 
 .upper-title{
     font-family: LatoBold; 
-    font-size: 60px;
+    
     width:100%;
     text-align: center;
     text-transform: uppercase;
 }
+
+@media screen and (min-width: 600px) {
+    .upper-title{
+        font-size: 60px;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .upper-title{
+        font-size: 20px;
+    }
+}
+
 
 #sentimentalWordInput {
   background-image: url('../img/searchicon.png');
@@ -130,4 +147,195 @@ svg .icon {
 text.timer{
     text-shadow: 1px 1px black;
     font-weight: bold;
+}
+
+#link_list_box{
+    /*background-color: white;*/
+    /*opacity: 0.4;*/
+    margin-top: 20px;
+    margin-bottom: 5px;
+    height: 100%;
+    max-height: 100%;
+}
+
+#link_list_wrapper{
+    display: flex;
+    flex-flow: column;
+    flex: 1;
+}
+.bottom_space{
+    height: 5px;
+}
+
+.list-group{
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.list-group-item{
+    color:white;
+    background-color: 	rgba(192, 192, 192, 0.2);
+    font-weight: bold;
+}
+a:link{
+    color:inherit;
+}
+.list-group::-webkit-scrollbar {
+    width: 1em;
+}
+ 
+.list-group::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
+ 
+.list-group::-webkit-scrollbar-thumb {
+  background-color: darkgrey;
+  outline: 1px solid slategrey;
+}
+
+
+
+
+
+
+/*#icons{
+    position: fixed;
+    right: 0px;
+    width: 30%;
+    bottom: 0px;
+    display: inline;
+}*/
+
+.icon{
+    display: block;
+    text-align: center;
+}
+#stats-icon{
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+}
+#help-icon{
+    position: fixed;
+    right: 120px;
+    bottom: 20px;
+}
+.glyphicon{
+    font-size: 2.5em;
+    padding: 3px;
+    position: relative;
+    top: auto;
+    bottom: 0;
+}
+.caption-bubble {
+    display: inline-block;
+    padding: 3px;
+    padding-bottom: 0;
+	position: relative;
+	background: rgba(0, 0, 0, 0.5);
+	border-radius: .4em;
+    font-size: 1em;
+    margin-bottom: 10px;
+    min-width: 60px;
+    opacity: 0;
+
+}
+
+.caption-bubble:after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	width: 0;
+	height: 0;
+	border: 10px solid transparent;
+	border-top-color: rgba(0, 0, 0, 0.5);
+	border-bottom: 0;
+	margin-left: -10px;
+    margin-bottom: -10px;
+}
+
+@keyframes fadeIn {
+    0% {opacity: 0;}
+    100% {opacity: 0.4;}
+ } 
+
+#modal-background{
+    z-index: 1000;
+    height: 100%;
+    width: 100%;
+    background-color: black;
+    opacity: 0.4;
+    position: absolute;
+    top:0;
+    animation: fadeIn ease 1s;
+}
+
+.modal-container{
+    height: 100%;
+    width: 100%;
+    top:0;
+    position: absolute;
+    z-index: 1001;
+    
+
+}
+
+#stats-layout-container{
+    text-align: center;
+    display: block;
+}
+#word-cloud-container{
+    text-align: center;
+}
+
+
+.modal-box{
+    top: 30px;
+    height: 50%;
+    widows: 40%;
+    display: block;
+    color: rgb(255, 255, 255);
+    background-color: rgba(117, 117, 117, 0.8);
+    border:  solid 2px rgb(235, 235, 235);
+    border-radius: 4px;
+    font-size: 1.5em;
+    padding: 30px;
+}
+.modal-box > p{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: justify;
+}
+.modal-box > h1{
+    margin: 0;
+    margin-bottom: 20px;
+}
+
+.modal-box > .modal-close{
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1em;
+}
+
+.scrollable{
+    
+    max-height: 70vh;
+    display: block;
+    overflow:auto;
+    -webkit-overflow-scrolling: touch;
+   
+}
+
+.scroll-container{
+    height: 20%;
 }
